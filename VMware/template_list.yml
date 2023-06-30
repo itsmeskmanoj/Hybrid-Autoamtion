@@ -1,0 +1,23 @@
+---
+ - name: get the vm details
+   hosts: localhost
+   become: false
+   gather_facts: false
+   collections:
+     - community.vmware
+   pre_tasks:
+     - include_vars: vars.yml
+   tasks:  
+     - name: Gather only registered virtual machine templates
+       vmware_guest_info:
+          hostname: '{{ vcenter_hostname }}'
+          username: '{{ vcenter_username }}'
+          password: '{{ vcenter_password }}'
+          validate_certs: false
+          vm_type: template
+       delegate_to: localhost
+       register: template_info
+
+     - debug:
+        var: template_info.virtual_machines
+

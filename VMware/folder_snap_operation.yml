@@ -1,0 +1,37 @@
+---
+- name: Take snapshots of VMs in a folder
+  hosts: localhost
+  gather_facts: yes
+  vars_prompt:
+    - name: folder_name
+      prompt: "Enter the name of the folder containing the VMs:"
+      private: no
+    - name: snapshot_operation
+      prompt: |
+        Select snapshot operation:
+        1.Take snapshot (present)
+        2.Delete snapshot (absent)
+        3.Revert to snapshot (revert)
+      private: no
+    - name: snapshot_name
+      prompt: "Give a name for you snap"
+      private: no
+
+  tasks:
+    - name: Take snapshot of each VM in folder
+      vmware_guest_snapshot:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "{{ datacenter_name }}"
+        folder: "{{ folder_name }}"
+        validate_certs: no
+        name: "{{ item.name }}"
+        state: "{{ 'present' if snapshot_operation == '1' else 'absent' if snapshot_operation == '2' else 'revert' }}"
+        snapshot_name: "{{ snapshot_name }}"
+        memory_dump: yes
+      with_items: "{{ query('vmware_guest_facts', gather_network_info='no', properties=['name'], folder=folder_name)['virtual_machines'] }}"
+    - name: Print success message
+      debug:
+        msg: "Snapshot operation '{{ snapshot_operation }}' performed on all VMs in folder '{{ folder_name }}'"
+

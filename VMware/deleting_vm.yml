@@ -1,0 +1,47 @@
+---
+ - name: Power off and delete virtual machine
+   hosts: localhost
+   gather_facts: no
+   collections:
+     - community.vmware
+
+   vars_prompt:
+           - name: vm_name
+             prompt: name the vm to delete ?
+             private: no
+   pre_tasks:
+     - include_vars: vars.yml
+
+   tasks:
+     - name: Find virtual machine
+       vmware_guest_find:
+         hostname: "{{ vcenter_hostname }}"
+         username: "{{ vcenter_username }}"
+         password: "{{ vcenter_password }}"
+         validate_certs: no
+         name: "{{ vm_name}}"
+       register: vm
+
+     - name: Power off virtual machine
+       vmware_guest:
+         hostname: "{{ vcenter_hostname }}"
+         username: "{{ vcenter_username }}"
+         password: "{{ vcenter_password }}"
+         validate_certs: no
+         name: "{{ vm_name }}"
+         state: poweredoff
+
+
+     - name: Delete virtual machine
+       vmware_guest:
+         hostname: "{{ vcenter_hostname }}"
+         username: "{{ vcenter_username }}"
+         password: "{{ vcenter_password }}"
+         validate_certs: no
+         name: "{{ vm_name }}"
+         state: absent
+     - name: VM status
+       debug:
+         msg: "{{vm_name}} VM is deleted"
+
+

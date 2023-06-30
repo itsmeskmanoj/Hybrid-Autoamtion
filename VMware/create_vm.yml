@@ -1,0 +1,46 @@
+---
+# create a new VM from a template
+
+- name: VM from template
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars_prompt:
+    - name: VM_name
+      prompt: give a good name to your Virtual machine?
+      private: no
+    - name: OS
+      prompt: selct OS RHEL-8.4 | Ubuntu 22.04  ?
+      private: no
+  vars_files:
+    - vars.yml
+  tasks:
+    - name: Create VM from template
+      vmware_guest:
+        validate_certs: False
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        folder: /OS-Templates
+        esxi_hostname: "{{ esxhost }}"
+        datacenter: SWC-Chennai-DR 
+        name: "{{ VM_name }}"
+        template: "{{ OS }}"
+        disk:
+          - size_gb: "{{ disk_size | default(60) }}"
+            type: thin
+            datastore: "{{ datastore }}"
+        networks:
+        - name: VM Network
+          type: dhcp
+        hardware:
+          memory_mb: "{{ vm_memory | default(8192) }}"
+        wait_for_ip_address: True
+        state: present
+      register: newvm
+
+    - name: IP address info
+      debug:
+        msg: "Great your new vm is now available
+              ip: {{ newvm.instance.ipv4 }} 
+              vmname: {{ VM_name }}"

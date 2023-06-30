@@ -1,0 +1,64 @@
+---
+ - name: Create Multiple VMs
+   hosts: localhost
+   gather_facts: no
+   vars_files:
+           - vars.yml
+
+   vars_prompt:
+    - name: num_vms
+      prompt: "How many VMs do you want to create?"
+      private: no
+
+    - name: vm_prefix
+      prompt: "Enter a prefix for VM names:"
+      private: no
+
+    - name: vm_template
+      prompt: "Enter the name of the VM template:"
+      private: no
+
+    - name: datastore
+      prompt: "Enter the name of the datastore:"
+      private: no
+
+    - name: vm_network
+      prompt: "Enter the name of the network:"
+      private: no
+
+   tasks:
+    - name: Create multiple VMs
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ vm_prefix }}-{{ item }}"
+        template: "{{ vm_template }}"
+        datastore: "{{ datastore }}"
+        datacenter: "{{datacenter_name}}"
+        esxi_hostname: "{{ esxhost }}"
+        folder: "/"
+        disk:
+          - size_gb: "{{ disk_size | default(60) }}"
+            type: thin
+            datastore: "{{ datastore }}" 
+        hardware:
+          memory_mb: 2048
+          num_cpus: 2
+          scsi: paravirtual
+        networks:
+        - name: VM Network
+          type: dhcp
+        wait_for_ip_address: True
+        state: present
+
+      loop: "{{ range(0, num_vms | default(0) | int) | list }}"
+      loop_control:
+        label: "{{ item }}"
+      register: vm_creation_result
+      when: num_vms is defined and num_vms | int > 0
+    - name: Display VM names and IP addresses
+      debug:
+        msg: "VM {{ item.item.name }} created with IP address {{ item.ansible_facts.default_ipv4.address }}"
+      loop: "{{ vm_creation_result.results }}"

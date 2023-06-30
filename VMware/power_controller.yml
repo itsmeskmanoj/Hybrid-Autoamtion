@@ -1,0 +1,38 @@
+---
+ - name: Control VM power state
+   hosts: localhost
+   gather_facts: no
+   vars_files:
+           - vars.yml
+   vars_prompt:
+     - name: vm_name
+       prompt: "Enter the name of the virtual machine:"
+       private: no
+     - name: vm_action
+       prompt: "Enter the action to perform (powered-on, powered-off, or restarted):"
+       private: no
+   tasks:
+     - name: Gather VM facts
+       vmware_guest_facts:
+         hostname: "{{vcenter_hostname}}"
+         username: "{{ vcenter_username }}"
+         password: "{{ vcenter_password }}"
+         validate_certs: False
+         datacenter: "{{ datacenter_name }}"
+         name: "{{ vm_name }}"
+       register: vm_facts
+
+     - name: Control VM power state
+       vmware_guest_powerstate:
+         hostname: "{{vcenter_hostname}}"
+         username: "{{ vcenter_username }}"
+         password: "{{ vcenter_password }}"
+         validate_certs: False
+         #datacenter: "{{ datacenter_name }}"
+         name: "{{ vm_name }}"
+         state: "{{ vm_action }}"
+       when: vm_facts.instance is defined
+     - name: message
+       debug:
+               msg: "VM has been {{vm_action}}"
+

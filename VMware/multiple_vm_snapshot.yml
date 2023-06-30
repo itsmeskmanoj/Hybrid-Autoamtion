@@ -1,0 +1,41 @@
+---
+ - name: Take snapshots of multiple VMs
+   hosts: localhost
+   gather_facts: yes 
+   vars_prompt:
+    - name: vm_list_csv
+      prompt: "Enter the list of VM names (comma-separated):"
+      private: no
+    - name: snap_name
+      prompt: "Enter Snap name"
+      private: no
+    - name: snapshot_operation
+      prompt: |
+         Select snapshot operation
+          1.Take snapshot (present)
+          2.Delete snapshot (absent)
+          3.Revert to snapshot (revert)
+      private: no
+      
+   vars:
+     vm_list: "{{ vm_list_csv.split(',') }}"
+   vars_files:
+           - vars.yml
+   tasks:
+    - name: Take snapshot of each VM
+      vmware_guest_snapshot:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        datacenter: "{{datacenter_name}}"
+        folder: "/"
+        validate_certs: no
+        name: "{{ item }}"
+        state: "{{ 'present' if snapshot_operation == '1' else 'absent' if snapshot_operation == '2' else 'revert' }}"
+        snapshot_name: "{{ snap_name }}"
+        memory_dump: yes
+      with_items: "{{ vm_list }}"
+    - name: message
+      debug:
+              msg: "Snapshot operation '{{ snapshot_operation }}' performed on VMs: {{ vm_list }}"
+

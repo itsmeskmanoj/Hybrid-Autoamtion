@@ -1,0 +1,9 @@
+vcenter_hostname: 10.105.1.26
+vcenter_username: automation@swc.localdomain
+vcenter_password: Smart@123
+esxhost: 10.105.1.7
+datastore: DataStore1-2TB(10.105.1.7)
+datacenter_name: SWC-Chennai-DR
+vcenter_validate_certs: false
+cluster_name: SWC-DR
+

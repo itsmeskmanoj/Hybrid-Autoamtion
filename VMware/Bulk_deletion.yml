@@ -1,0 +1,54 @@
+---
+- name: Power off and delete virtual machines
+  hosts: localhost
+  gather_facts: no
+  collections:
+    - community.vmware
+
+  vars_prompt:
+    - name: vm_names
+      prompt: "Enter a comma-separated list of VM names to delete:"
+      private: no
+
+  pre_tasks:
+    - include_vars: vars.yml
+
+  tasks:
+    - name: Convert list of VM names to array
+      set_fact:
+        vm_array: "{{ vm_names.split(',') }}"
+
+    - name: Find virtual machines
+      vmware_guest_find:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ item }}"
+      loop: "{{ vm_array }}"
+      register: vm
+
+    - name: Power off virtual machines
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ item.item }}"
+        state: poweredoff
+      loop: "{{ vm.results }}"
+
+    - name: Delete virtual machines
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: no
+        name: "{{ item.item }}"
+        state: absent
+      loop: "{{ vm.results }}"
+
+    - name: VM status
+      debug:
+        msg: "VMs {{ vm_names }} have been deleted."
+

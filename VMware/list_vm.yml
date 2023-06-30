@@ -1,0 +1,20 @@
+---
+ - name: Get VM list from vCenter
+   hosts: localhost
+   gather_facts: no
+   vars_files:
+           - vars.yml
+
+   tasks:
+     - name: Get VM list
+       vmware_vm_info:
+         hostname: "{{ vcenter_hostname }}"
+         username: "{{ vcenter_username }}"
+         password: "{{ vcenter_password }}"
+         validate_certs: no
+       register: vm_list
+
+     - name: Print VM list
+       debug:
+         var: vm_list.virtual_machines
+
